@@ -2,6 +2,7 @@ import os
 import time
 import re
 import textwrap
+import persistance
 from slackclient import SlackClient
 
 # instantiate Slack client
@@ -238,9 +239,12 @@ def add_order(from_user, meal, price, restaurant):
     if not price == 0:
         meals_dict[MEAL_DICT_KEY_PRICE] = price
 
+    persistance.save_orders_dict(orders_dict)
+
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
         print("Starter Bot connected and running!")
+        orders_dict = persistance.load_orders_dict()
         # Read bot's user ID by calling Web API method `auth.test`
         starterbot_id = slack_client.api_call("auth.test")["user_id"]
         while True:
