@@ -202,7 +202,7 @@ def cancel_orders(channel, from_user):
     slack_client.api_call(
         CHAT_POST_MESSAGE,
         channel=channel,
-        text='<@{0}> All orders canceled!'.format(from_user)
+        text='Canceled all orders from <@{0}>'.format(from_user)
     )
 
 
