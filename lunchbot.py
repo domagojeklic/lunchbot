@@ -168,11 +168,11 @@ def summarize_all_restaurants(channel):
         if len(orders_dict[restaurant]) > 0:
             summarize_restaurant(channel, restaurant)
 
-        slack_client.api_call(
-            CHAT_POST_MESSAGE,
-            channel=channel,
-            text='-----------------------------------------------------'
-        )
+            slack_client.api_call(
+                CHAT_POST_MESSAGE,
+                channel=channel,
+                text='-----------------------------------------------------'
+            )
 
 
 def cancel_orders(channel, from_user):
