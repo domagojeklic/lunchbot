@@ -164,14 +164,24 @@ def summarize_restaurant(channel, restaurant):
     )
 
 def summarize_all_restaurants(channel):
+    has_order = False
     for restaurant in orders_dict.keys():
         if len(orders_dict[restaurant]) > 0:
             summarize_restaurant(channel, restaurant)
 
+            slack_client.api_call(
+                CHAT_POST_MESSAGE,
+                channel=channel,
+                text='-----------------------------------------------------'
+            )
+
+            has_order = True
+
+    if not has_order:
         slack_client.api_call(
             CHAT_POST_MESSAGE,
             channel=channel,
-            text='-----------------------------------------------------'
+            text='No orders to summarize'
         )
 
 
@@ -192,7 +202,7 @@ def cancel_orders(channel, from_user):
     slack_client.api_call(
         CHAT_POST_MESSAGE,
         channel=channel,
-        text='<@{0}> All orders canceled!'.format(from_user)
+        text='Canceled all orders from <@{0}>'.format(from_user)
     )
 
 
