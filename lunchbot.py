@@ -17,7 +17,8 @@ MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 CHAT_POST_MESSAGE = 'chat.postMessage'
 REACTION_ADD = 'reactions.add'
 
-ORDER_COMMAND_REGEX = 'order\s+([^0-9]*)\s+([0-9]*(?:,|.)?[0-9]*)\s*(?:kn)*\s*from\s+(\S*)'
+ORDER_CMD_REGEX = 'order\s+(.*)\s+from\s+(\S+)'
+ORDER_CMD_MEAL_PRICE_REGEX = '^(.*?)([0-9]+(?:,|.)?[0-9]*)\s*(?:kn?)?$'
 MEAL_DICT_KEY_USERS = 'users'
 MEAL_DICT_KEY_PRICE = 'price'
 
@@ -50,19 +51,20 @@ def handle_command(channel, timestamp, from_user, command):
         Executes bot command if the command is known
     """
 
-    matches = re.search(ORDER_COMMAND_REGEX, command)
+    matches = re.search(ORDER_CMD_REGEX, command)
     if matches:
-        meal = matches.group(1).strip()
-        restaurant = matches.group(3).strip()
-        try:
-            price = float(matches.group(2).strip().replace(',', '.'))
-        except:
-            price = 0.0
+        meal_price = matches.group(1).strip()
+        restaurant = matches.group(2).strip()
+        
+        matches_mp = re.search(ORDER_CMD_MEAL_PRICE_REGEX, meal_price)
+        if matches_mp:
+            meal = matches_mp.group(1).strip()
+            price = float(matches_mp.group(2).strip().replace(',', '.'))
 
-        print('Order received:\nRestaurant: {0}\nMeal: {1}\nPrice: {2}\n'.format(restaurant, meal, price))
+            print('Order received:\nRestaurant: {0}\nMeal: {1}\nPrice: {2}\n'.format(restaurant, meal, price))
 
-        handle_order(channel, timestamp, from_user, meal, price, restaurant)
-        return
+            handle_order(channel, timestamp, from_user, meal, price, restaurant)
+            return
 
     command_arr = command.split()
     command_arr_len = len(command_arr)
