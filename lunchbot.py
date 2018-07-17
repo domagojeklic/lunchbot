@@ -126,6 +126,8 @@ def usage_description():
 def handle_order(channel, timestamp, from_user, meal, price, restaurant):
     orders.add_order(restaurant, meal, price, from_user)
 
+    persistance.save_orders(orders)
+
     slack_client.api_call(
         REACTION_ADD,
         channel=channel,
@@ -191,7 +193,7 @@ def print_usage(channel):
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
         print("Starter Bot connected and running!")
-        # orders_dict = persistance.load_orders_dict()
+        orders = persistance.load_orders()
         # Read bot's user ID by calling Web API method `auth.test`
         starterbot_id = slack_client.api_call("auth.test")["user_id"]
         while True:
