@@ -3,6 +3,7 @@ import time
 import re
 import textwrap
 import persistance
+from orders import *
 from slackclient import SlackClient
 
 # instantiate Slack client
@@ -22,7 +23,7 @@ ORDER_CMD_MEAL_PRICE_REGEX = '^(.*?)([0-9]+(?:,|.)?[0-9]*)\s*(?:kn?)?$'
 MEAL_DICT_KEY_USERS = 'users'
 MEAL_DICT_KEY_PRICE = 'price'
 
-orders_dict = {}
+orders = Orders()
 
 def parse_bot_commands(slack_events):
     """
@@ -123,7 +124,7 @@ def usage_description():
 #Custom defined commands
 
 def handle_order(channel, timestamp, from_user, meal, price, restaurant):
-    add_order(from_user, meal, price, restaurant)
+    orders.add_order(restaurant, meal, price, from_user)
 
     slack_client.api_call(
         REACTION_ADD,
@@ -133,31 +134,7 @@ def handle_order(channel, timestamp, from_user, meal, price, restaurant):
     )
 
 def summarize_restaurant(channel, restaurant):
-    if restaurant == None:
-        summarized = 'Please specify restaurant name or *summarize all* for all restaurants'
-    elif restaurant.lower() not in orders_dict or len(orders_dict[restaurant.lower()]) == 0:
-        summarized = 'There are no orders from *{0}*'.format(restaurant)
-    else :
-        rest_dict = orders_dict[restaurant.lower()]
-        totalPrice = 0
-
-        summarized = '*{0}:*\n'.format(restaurant)
-        for meal, meal_dict in rest_dict.items():
-            users = meal_dict[MEAL_DICT_KEY_USERS]
-            price = meal_dict[MEAL_DICT_KEY_PRICE]
-            num_orders = len(users)
-            totalPrice += price * num_orders
-
-            summarized += '_{0}_, *{1}kn* x{2}'.format(meal, price, num_orders)
-            summarized += ' ('
-            for i in range(len(users)):
-                u = users[i]
-                summarized += '<@{0}>'.format(u)
-                if not i == len(users) - 1:
-                    summarized += ', '
-            summarized += ')\n'
-        
-        summarized += '\n_Total:_ *{0}kn*'.format(totalPrice)
+    summarized = orders.summarize(restaurant)
     
     slack_client.api_call(
         CHAT_POST_MESSAGE,
@@ -166,40 +143,17 @@ def summarize_restaurant(channel, restaurant):
     )
 
 def summarize_all_restaurants(channel):
-    has_order = False
-    for restaurant in orders_dict.keys():
-        if len(orders_dict[restaurant]) > 0:
-            summarize_restaurant(channel, restaurant)
+    summarized = orders.summarize_all()
 
-            slack_client.api_call(
-                CHAT_POST_MESSAGE,
-                channel=channel,
-                text='-----------------------------------------------------'
-            )
-
-            has_order = True
-
-    if not has_order:
-        slack_client.api_call(
-            CHAT_POST_MESSAGE,
-            channel=channel,
-            text='No orders to summarize'
-        )
+    slack_client.api_call(
+        CHAT_POST_MESSAGE,
+        channel=channel,
+        text=summarized
+    )
 
 
 def cancel_orders(channel, from_user):
-    for rest_dict in orders_dict.values():
-        delete_meals = []
-        for meal_name, meal_dict in rest_dict.items():
-            users = meal_dict[MEAL_DICT_KEY_USERS]
-            if from_user in users:
-                users.remove(from_user)
-            if len(users) == 0:
-                delete_meals.append(meal_name)
-        
-        if len(delete_meals) > 0:
-            for meal in delete_meals:
-                del rest_dict[meal]
+    orders.cancel_orders(from_user)
     
     slack_client.api_call(
         CHAT_POST_MESSAGE,
@@ -209,12 +163,7 @@ def cancel_orders(channel, from_user):
 
 
 def clear_restaurant(channel, restaurant):
-    rest_lower = restaurant.lower()
-    if rest_lower not in orders_dict:
-        message = 'There are no orders from *{0}*'.format(restaurant)
-    else:
-        del orders_dict[rest_lower]
-        message = 'All orders from *{0}* cleared!'.format(restaurant)
+    message = orders.clear_restaurant(restaurant)
 
     slack_client.api_call(
         CHAT_POST_MESSAGE,
@@ -223,7 +172,7 @@ def clear_restaurant(channel, restaurant):
     )
 
 def clear_all_restaurants(channel):
-    orders_dict.clear()
+    orders.clear_all()
 
     slack_client.api_call(
         CHAT_POST_MESSAGE,
@@ -239,30 +188,10 @@ def print_usage(channel):
         text=usage_description()
     )
 
-#Orders
-
-def add_order(from_user, meal, price, restaurant):
-    rest_lower = restaurant.lower()
-    if rest_lower not in orders_dict:
-        orders_dict[rest_lower] = {}
-
-    rest_dict = orders_dict[rest_lower]
-
-    if meal not in rest_dict:
-        rest_dict[meal] = { MEAL_DICT_KEY_PRICE : 0.0,
-                            MEAL_DICT_KEY_USERS : [] }
-
-    meals_dict = rest_dict[meal]
-    meals_dict[MEAL_DICT_KEY_USERS].append(from_user)
-    if not price == 0:
-        meals_dict[MEAL_DICT_KEY_PRICE] = price
-
-    persistance.save_orders_dict(orders_dict)
-
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
         print("Starter Bot connected and running!")
-        orders_dict = persistance.load_orders_dict()
+        # orders_dict = persistance.load_orders_dict()
         # Read bot's user ID by calling Web API method `auth.test`
         starterbot_id = slack_client.api_call("auth.test")["user_id"]
         while True:
