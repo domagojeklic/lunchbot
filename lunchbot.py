@@ -94,7 +94,7 @@ def handle_command(channel, timestamp, from_user, command):
         clear_restaurant(channel, command_arr[1])
         return
 
-    if command_arr_len == 2 and command == 'orders' and command_arr[1] == 'cancel':
+    if command_arr_len == 3 and command == 'cancel' and command_arr[1] == 'my' and command_arr[2] == 'orders':
         cancel_orders(channel, from_user)
         return
     
@@ -122,7 +122,7 @@ def usage_description():
         \t• Summarize orders from all restaurants
         *notify* _restaurant_ _message_
         \t• Send _message_ to all users from restaurant
-        *orders cancel*
+        *cancel my orders*
         \t • Cancel orders from user
         *clear* _restaurant_
         \t• Clear all orders from restaurant
