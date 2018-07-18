@@ -23,6 +23,7 @@ class Restaurant:
     def __init__(self, name):
         self.name = name
         self.meals_dict = {}
+        self.price_multiplier = 1.0
 
     def add_meal(self, meal: Meal):
         self.meals_dict[meal.name] = meal
@@ -40,8 +41,8 @@ class Restaurant:
 
         summarized = '*{0}:*\n'.format(self.name)
         for meal_name, meal in self.meals_dict.items():
-            totalPrice += meal.total_price()
-            summarized += '_{0}_, *{1}kn* x{2}'.format(meal_name, meal.total_price(), meal.total_number())
+            totalPrice += meal.total_price() * self.price_multiplier
+            summarized += '_{0}_, *{1}kn* x{2}'.format(meal_name, meal.total_price() * self.price_multiplier, meal.total_number())
             summarized += ' ('
             for i in range(len(meal.users)):
                 u = meal.users[i]
@@ -73,6 +74,16 @@ class Restaurant:
         
         return final_message
 
+    def apply_discount(self, percentage) -> str:
+        '''
+            applies discount to all meal prices
+        '''
+
+        if percentage > 0 and percentage < 100:
+            self.price_multiplier = 1.0 - percentage / 100.0
+            return 'Discount applied'
+        else:
+            return 'Percentage should be between 0 and 100'
 
 class Orders:
     '''
@@ -157,5 +168,12 @@ class Orders:
         if restaurant_name in self.restaurants_dict:
             restaurant = self.restaurants_dict[restaurant_name]
             return restaurant.notify(message)
+        else:
+            return 'There are no orders from *{0}*'.format(restaurant_name)
+
+    def apply_discount(self, restaurant_name, percentage) -> str:
+        if restaurant_name in self.restaurants_dict:
+            restaurant = self.restaurants_dict[restaurant_name]
+            return restaurant.apply_discount(percentage)
         else:
             return 'There are no orders from *{0}*'.format(restaurant_name)

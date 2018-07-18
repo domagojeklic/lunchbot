@@ -22,6 +22,8 @@ CMD_ORDER_MEAL_PRICE_REGEX = '^(.*?)([0-9]+(?:,|.)?[0-9]*)\s*(?:kn?)?$'
 
 CMD_NOTIFY_REGEX = '^notify\s+(\S+)\s(.+)$'
 
+CMD_DISCOUNT_REGEX = '^discount\s+(\S+)\s(\d+)\s*%$'
+
 orders = Orders()
 
 def parse_bot_commands(slack_events):
@@ -72,6 +74,13 @@ def handle_command(channel, timestamp, from_user, command):
         message = matches.group(2)
 
         notify_restaurant(channel, restaurant, message)
+        return
+    
+    matches = re.search(CMD_DISCOUNT_REGEX, command)
+    if matches:
+        restaurant = matches.group(1)
+        percentage = int(matches.group(2))
+        discount_restaurant(channel, restaurant, percentage)
         return
 
     command_arr = command.split()
@@ -169,6 +178,15 @@ def notify_restaurant(channel, restaurant, message):
         CHAT_POST_MESSAGE,
         channel=channel,
         text=final_message
+    )
+
+def discount_restaurant(channel, restaurant, percentage):
+    message = orders.apply_discount(restaurant, percentage)
+
+    slack_client.api_call(
+        CHAT_POST_MESSAGE,
+        channel=channel,
+        text=message
     )
 
 def cancel_orders(channel, from_user):
