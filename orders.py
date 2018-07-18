@@ -54,6 +54,26 @@ class Restaurant:
 
         return summarized
 
+    def all_users(self) -> {str}:
+        '''
+            returns the list of users that have ordered meal from the restaurant
+        '''
+        users = set()
+        for _, meal in self.meals_dict.items():
+            for user in meal.users:
+                users.add(user)
+        
+        return users
+    
+    def notify(self, message) -> str:
+        all_users = self.all_users()
+        final_message = message
+        for user in all_users:
+            final_message += ' <@{0}>'.format(user)
+        
+        return final_message
+
+
 class Orders:
     '''
         Holds information about orders from all restaurants
@@ -133,3 +153,9 @@ class Orders:
         
         return summarized if len(summarized) > 0 else 'There are no orders'
 
+    def notify_restaurant(self,restaurant_name, message) -> str:
+        if restaurant_name in self.restaurants_dict:
+            restaurant = self.restaurants_dict[restaurant_name]
+            return restaurant.notify(message)
+        else:
+            return 'There are no orders from *{0}*'.format(restaurant_name)

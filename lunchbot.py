@@ -13,15 +13,14 @@ starterbot_id = None
 
 # constants
 RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
-EXAMPLE_COMMAND = "do"
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 CHAT_POST_MESSAGE = 'chat.postMessage'
 REACTION_ADD = 'reactions.add'
 
-ORDER_CMD_REGEX = 'order\s+(.*)\s+from\s+(\S+)'
-ORDER_CMD_MEAL_PRICE_REGEX = '^(.*?)([0-9]+(?:,|.)?[0-9]*)\s*(?:kn?)?$'
-MEAL_DICT_KEY_USERS = 'users'
-MEAL_DICT_KEY_PRICE = 'price'
+CMD_ORDER_REGEX = 'order\s+(.*)\s+from\s+(\S+)'
+CMD_ORDER_MEAL_PRICE_REGEX = '^(.*?)([0-9]+(?:,|.)?[0-9]*)\s*(?:kn?)?$'
+
+CMD_NOTIFY_REGEX = '^notify\s+(\S+)\s(.+)$'
 
 orders = Orders()
 
@@ -52,12 +51,12 @@ def handle_command(channel, timestamp, from_user, command):
         Executes bot command if the command is known
     """
 
-    matches = re.search(ORDER_CMD_REGEX, command)
+    matches = re.search(CMD_ORDER_REGEX, command)
     if matches:
         meal_price = matches.group(1).strip()
         restaurant = matches.group(2).strip()
         
-        matches_mp = re.search(ORDER_CMD_MEAL_PRICE_REGEX, meal_price)
+        matches_mp = re.search(CMD_ORDER_MEAL_PRICE_REGEX, meal_price)
         if matches_mp:
             meal = matches_mp.group(1).strip()
             price = float(matches_mp.group(2).strip().replace(',', '.'))
@@ -66,6 +65,14 @@ def handle_command(channel, timestamp, from_user, command):
 
             handle_order(channel, timestamp, from_user, meal, price, restaurant)
             return
+
+    matches = re.search(CMD_NOTIFY_REGEX, command)
+    if matches:
+        restaurant = matches.group(1)
+        message = matches.group(2)
+
+        notify_restaurant(channel, restaurant, message)
+        return
 
     command_arr = command.split()
     command_arr_len = len(command_arr)
@@ -113,6 +120,8 @@ def usage_description():
         \t• Summarize all orders from restaurant
         *summarize all*
         \t• Summarize orders from all restaurants
+        *notify* _restaurant_ _message_
+        \t• Send _message_ to all users from restaurant
         *orders cancel*
         \t • Cancel orders from user
         *clear* _restaurant_
@@ -153,6 +162,14 @@ def summarize_all_restaurants(channel):
         text=summarized
     )
 
+def notify_restaurant(channel, restaurant, message):
+    final_message = orders.notify_restaurant(restaurant, message)
+
+    slack_client.api_call(
+        CHAT_POST_MESSAGE,
+        channel=channel,
+        text=final_message
+    )
 
 def cancel_orders(channel, from_user):
     orders.cancel_orders(from_user)
