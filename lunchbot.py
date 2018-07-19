@@ -183,6 +183,8 @@ def notify_restaurant(channel, restaurant, message):
 def discount_restaurant(channel, restaurant, percentage):
     message = orders.apply_discount(restaurant, percentage)
 
+    persistance.save_orders(orders)
+
     slack_client.api_call(
         CHAT_POST_MESSAGE,
         channel=channel,

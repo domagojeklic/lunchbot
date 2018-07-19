@@ -42,7 +42,7 @@ class Restaurant:
         summarized = '*{0}:*\n'.format(self.name)
         for meal_name, meal in self.meals_dict.items():
             totalPrice += meal.total_price() * self.price_multiplier
-            summarized += '_{0}_, *{1}kn* x{2}'.format(meal_name, meal.total_price() * self.price_multiplier, meal.total_number())
+            summarized += '_{0}_, *{1}kn* x{2}'.format(meal_name, meal.price * self.price_multiplier, meal.total_number())
             summarized += ' ('
             for i in range(len(meal.users)):
                 u = meal.users[i]
