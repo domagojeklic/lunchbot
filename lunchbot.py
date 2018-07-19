@@ -20,7 +20,7 @@ REACTION_ADD = 'reactions.add'
 CMD_ORDER_REGEX = 'order\s+(.*)\s+from\s+(\S+)'
 CMD_ORDER_MEAL_PRICE_REGEX = '^(.*?)([0-9]+(?:,|.)?[0-9]*)\s*(?:kn?)?$'
 
-CMD_NOTIFY_REGEX = '^notify\s+(\S+)\s(.+)$'
+CMD_NOTIFY_REGEX = '^notify\s+(\S+)\s*(.+)?$'
 
 CMD_DISCOUNT_REGEX = '^discount\s+(\S+)\s(\d+)\s*%$'
 

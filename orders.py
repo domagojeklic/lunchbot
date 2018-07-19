@@ -68,7 +68,7 @@ class Restaurant:
     
     def notify(self, message) -> str:
         all_users = self.all_users()
-        final_message = message
+        final_message = message if message != None else self.name
         for user in all_users:
             final_message += ' <@{0}>'.format(user)
         
