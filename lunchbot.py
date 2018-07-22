@@ -5,6 +5,7 @@ import textwrap
 import persistance
 from orders import *
 from slackclient import SlackClient
+import threading
 
 # instantiate Slack client
 slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
@@ -227,16 +228,21 @@ def print_usage(channel):
         text=usage_description()
     )
 
+def process_input():
+    while True:
+            command, timestamp, channel, from_user = parse_bot_commands(slack_client.rtm_read())
+            if command:
+                handle_command(channel, timestamp, from_user, command)
+            time.sleep(RTM_READ_DELAY)
+
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
         print("Starter Bot connected and running!")
         orders = persistance.load_orders()
         # Read bot's user ID by calling Web API method `auth.test`
         starterbot_id = slack_client.api_call("auth.test")["user_id"]
-        while True:
-            command, timestamp, channel, from_user = parse_bot_commands(slack_client.rtm_read())
-            if command:
-                handle_command(channel, timestamp, from_user, command)
-            time.sleep(RTM_READ_DELAY)
+
+        process_thread = threading.Thread(target=process_input)
+        process_thread.start()
     else:
         print("Connection failed. Exception traceback printed above.")
