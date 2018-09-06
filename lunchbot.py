@@ -132,6 +132,8 @@ def usage_description():
         \t• Summarize orders from all restaurants
         *notify* _restaurant_ _message_
         \t• Send _message_ to all users from restaurant
+        *discount* _restaurant_ _percentage_
+        \t• Discounts all prices from the restaurant 
         *cancel my orders*
         \t • Cancel orders from user
         *clear* _restaurant_
