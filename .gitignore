@@ -67,5 +67,8 @@ target/
 # environment variables
 .env
 
-#orders backup
+# Orders backup
 *orders.bak
+
+# Bot token
+slack-token
